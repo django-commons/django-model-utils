@@ -28,6 +28,7 @@ from tests.models import (
     TrackedNonFieldAttr,
     TrackedNotDefault,
     TrackedProtectedSelfRefFK,
+    TrackedUUID,
     TrackerTimeStamped,
 )
 
@@ -291,6 +292,38 @@ class FieldTrackerTests(FieldTrackerCommonMixin, TestCase):
             self.assertTrue(item.tracker.has_changed('number'))
             item.number = 1
             self.assertFalse(item.tracker.has_changed('number'))
+
+
+class FieldTrackerAssignedPrimaryKeyTests(TestCase):
+    def test_unsaved_with_default_uuid(self) -> None:
+        item = TrackedUUID(name='new')
+        self.assertIsNotNone(item.pk)
+        self.assertIsNone(item.tracker.previous('name'))
+        self.assertTrue(item.tracker.has_changed('name'))
+        self.assertFalse(item.tracker.has_changed('number'))
+        self.assertEqual(item.tracker.changed(), {'id': None, 'name': None})
+
+        item.save()
+        self.assertEqual(item.tracker.changed(), {})
+        self.assertEqual(item.tracker.previous('name'), 'new')
+
+    def test_unsaved_with_explicit_auto_field_value(self) -> None:
+        item = Tracked(pk=1, name='new', number=5)
+        self.assertEqual(item.tracker.changed(), {'id': None, 'name': None, 'number': None})
+
+    def test_loaded_uuid_with_deferred_field(self) -> None:
+        saved = TrackedUUID.objects.create(name='saved', number=5)
+        item = TrackedUUID.objects.only('name').get(pk=saved.pk)
+
+        with self.assertNumQueries(0):
+            self.assertEqual(item.tracker.changed(), {})
+            self.assertEqual(item.tracker.previous('name'), 'saved')
+            self.assertIn('number', item.get_deferred_fields())
+
+        item.name = 'changed'
+        self.assertEqual(item.tracker.changed(), {'name': 'saved'})
+        self.assertEqual(item.tracker.previous('number'), 5)
+        self.assertNotIn('number', item.get_deferred_fields())
 
 
 class FieldTrackerMultipleInstancesTests(TestCase):

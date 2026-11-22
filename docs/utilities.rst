@@ -151,7 +151,8 @@ last saved.  An example of applying ``FieldTracker`` to a model:
       unsaved instances; rather, ``None`` is considered to be the initial value
       of all fields if the model has never been saved, thus ``changed()`` on an
       unsaved instance will return a dictionary containing all fields whose
-      current value is not ``None``.
+      current value is not ``None``. This also applies to new instances whose
+      primary key is assigned before the first save, such as by a UUID default.
 
     * The ``has_changed()`` method no longer crashes after an object's first
       save. (GH-53).

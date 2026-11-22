@@ -224,6 +224,13 @@ class Tracked(models.Model):
         super().save(*args, **kwargs)
 
 
+class TrackedUUID(UUIDModel):
+    name = models.CharField(max_length=20)
+    number = models.IntegerField(null=True)
+
+    tracker = FieldTracker()
+
+
 class TrackerTimeStamped(TimeStampedModel):
     name = models.CharField(max_length=20)
     number = models.IntegerField()

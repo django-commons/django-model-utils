@@ -13,6 +13,8 @@ To be released
 - Fix `InheritanceQuerySet.iterator()` to stop fetching the entire table (GH-#655)
 - Stop `FieldTracker` scanning every concrete field on each assignment made by
   `Model.__init__`; the result was discarded until the tracker was initialised (GH-#655)
+- Fix `FieldTracker` treating assigned primary keys as evidence that a new
+  instance has been saved (GH-#435).
 
 5.0.0 (2024-09-01)
 ------------------

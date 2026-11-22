@@ -221,6 +221,8 @@ class FieldsContext:
 
 
 class FieldInstanceTracker:
+    _use_initial_values_on_unsaved = False
+
     def __init__(self, instance: models.Model, fields: Iterable[str], field_map: Mapping[str, str]):
         self.instance = cast('_AugmentedModel', instance)
         self.fields = fields
@@ -288,6 +290,11 @@ class FieldInstanceTracker:
 
     def previous(self, field: str) -> Any:
         """Returns currently saved value of given field"""
+
+        # Django sets adding=False after constructing instances from the database.
+        # Keep the snapshot from __init__, but ignore it on unsaved instances.
+        if self.instance._state.adding and not self._use_initial_values_on_unsaved:
+            return None
 
         # handle deferred fields that have not yet been loaded from the database
         if self.instance.pk and field in self.deferred_fields and field not in self.saved_data:
@@ -447,6 +454,7 @@ class FieldTracker:
 
 
 class ModelInstanceTracker(FieldInstanceTracker):
+    _use_initial_values_on_unsaved = True
 
     def has_changed(self, field: str) -> bool:
         """Returns ``True`` if field has changed from currently saved value"""
